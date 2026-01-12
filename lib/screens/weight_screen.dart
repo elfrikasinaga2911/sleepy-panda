@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart'; // pastikan path sesuai dengan struktur project-mu
+import 'package:shared_preferences/shared_preferences.dart';
+import 'main_navigation.dart';
 
 class WeightScreen extends StatefulWidget {
   const WeightScreen({super.key});
@@ -9,7 +10,35 @@ class WeightScreen extends StatefulWidget {
 }
 
 class _WeightScreenState extends State<WeightScreen> {
-  double weight = 60;
+  double weight = 50;
+  bool _isNavigating = false;
+
+  Future<void> _finishOnboarding() async {
+    if (_isNavigating) return;
+    _isNavigating = true;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // SIMPAN BERAT BADAN
+      await prefs.setDouble('weight', weight);
+
+      // TANDAI ONBOARDING SELESAI
+      await prefs.setBool('onboarding_complete', true);
+
+      if (!mounted) return;
+
+      // MASUK KE APP UTAMA (HAPUS SEMUA STACK)
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const MainNavigation()),
+            (route) => false,
+      );
+    } catch (e) {
+      debugPrint('ERROR FINISH ONBOARDING: $e');
+      _isNavigating = false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,37 +50,42 @@ class _WeightScreenState extends State<WeightScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 100),
+
             const Text(
-              'Terakhir,',
-              style: TextStyle(color: Colors.white, fontSize: 18),
+              'Berapa berat badan kamu?',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            const SizedBox(height: 6),
+
+            const SizedBox(height: 8),
+
             const Text(
-              'Berapa berat badan mu?',
+              'Data ini membantu kami memberikan rekomendasi terbaik.',
               style: TextStyle(color: Colors.white70),
             ),
-            const SizedBox(height: 30),
+
+            const SizedBox(height: 40),
 
             Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2A2D4E),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${weight.toInt()} Kg',
-                  style: const TextStyle(color: Colors.white, fontSize: 20),
+              child: Text(
+                '${weight.toInt()} kg',
+                style: const TextStyle(
+                  fontSize: 40,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
 
             Slider(
-              activeColor: const Color(0xFF009688),
-              inactiveColor: Colors.white24,
+              value: weight,
               min: 30,
               max: 150,
-              value: weight,
+              divisions: 120,
+              label: '${weight.toInt()}',
               onChanged: (value) {
                 setState(() {
                   weight = value;
@@ -61,34 +95,21 @@ class _WeightScreenState extends State<WeightScreen> {
 
             const Spacer(),
 
-            Align(
-              alignment: Alignment.bottomRight,
+            SizedBox(
+              width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // tampilkan notifikasi dulu
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      backgroundColor: Color(0xFF009688),
-                      content: Text('Data kamu sudah lengkap! 🎉'),
-                    ),
-                  );
-
-                  // pindah ke halaman home setelah 1 detik
-                  Future.delayed(const Duration(seconds: 1), () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const HomeScreen()),
-                    );
-                  });
-                },
+                onPressed: _finishOnboarding,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF009688),
-                  minimumSize: const Size(120, 45),
+                  backgroundColor: Colors.teal,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Selesai'),
+                child: const Text(
+                  'Selesai',
+                  style: TextStyle(fontSize: 16),
+                ),
               ),
             ),
           ],

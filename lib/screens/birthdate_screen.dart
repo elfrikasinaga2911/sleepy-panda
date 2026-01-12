@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'height_screen.dart';
 
 class BirthdateScreen extends StatefulWidget {
@@ -9,95 +10,156 @@ class BirthdateScreen extends StatefulWidget {
 }
 
 class _BirthdateScreenState extends State<BirthdateScreen> {
-  DateTime selectedDate = DateTime(2000, 1, 1);
+  int day = 1;
+  int month = 1;
+  int year = 2000;
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: selectedDate,
-      firstDate: DateTime(1960),
-      lastDate: DateTime(2025),
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.dark().copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: Color(0xFF009688),
-              onPrimary: Colors.white,
-              surface: Color(0xFF1C1F3B),
-              onSurface: Colors.white,
-            ),
-          ),
-          child: child!,
-        );
-      },
+  bool _isNavigating = false;
+
+  final List<int> days = List.generate(31, (i) => i + 1);
+  final List<int> months = List.generate(12, (i) => i + 1);
+  final List<int> years =
+  List.generate(DateTime.now().year - 1950 + 1, (i) => 1950 + i);
+
+  /// ================= SAVE & NEXT =================
+  Future<void> _saveAndNext() async {
+    if (_isNavigating) return;
+    _isNavigating = true;
+
+    final prefs = await SharedPreferences.getInstance();
+    final birthdate = DateTime(year, month, day);
+
+    await prefs.setString(
+      'birthdate',
+      birthdate.toIso8601String(),
     );
-    if (picked != null && picked != selectedDate) {
-      setState(() {
-        selectedDate = picked;
-      });
-    }
+
+    if (!mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const HeightScreen()),
+    );
   }
 
+  /// ================= PICKER =================
+  Widget picker({
+    required List<int> items,
+    required int value,
+    required ValueChanged<int> onChanged,
+  }) {
+    return Expanded(
+      child: SizedBox(
+        height: 150,
+        child: ListWheelScrollView.useDelegate(
+          itemExtent: 45,
+          physics: const FixedExtentScrollPhysics(),
+          onSelectedItemChanged: (index) {
+            onChanged(items[index]);
+          },
+          childDelegate: ListWheelChildBuilderDelegate(
+            builder: (context, index) {
+              final item = items[index];
+              final isSelected = item == value;
+              return Center(
+                child: Text(
+                  item.toString().padLeft(2, '0'),
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.white54,
+                    fontSize: isSelected ? 22 : 16,
+                    fontWeight:
+                    isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              );
+            },
+            childCount: items.length,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// ================= UI =================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF1C1F3B),
-      body: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 100),
-            const Text(
-              'Terima kasih!',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Sekarang, kapan tanggal lahir mu?',
-              style: TextStyle(color: Colors.white70),
-            ),
-            const SizedBox(height: 30),
 
-            GestureDetector(
-              onTap: () => _selectDate(context),
-              child: Container(
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2A2D4E),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${selectedDate.day.toString().padLeft(2, '0')} / '
-                      '${selectedDate.month.toString().padLeft(2, '0')} / '
-                      '${selectedDate.year}',
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
+      body: Column(
+        children: [
+          /// 🔥 AREA ATAS → TAP UNTUK NEXT
+          Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: _saveAndNext,
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    SizedBox(height: 100),
+                    Text(
+                      'Terima kasih!',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 6),
+                    Text(
+                      'Scroll untuk memilih tanggal lahir kamu',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ],
                 ),
               ),
             ),
+          ),
 
-            const Spacer(),
-
-            Align(
-              alignment: Alignment.bottomRight,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const HeightScreen()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF009688),
-                  minimumSize: const Size(120, 45),
+          /// 🚫 PICKER AREA → AMAN DARI TAP
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            margin: const EdgeInsets.symmetric(horizontal: 32),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2A2D4E),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                picker(
+                  items: days,
+                  value: day,
+                  onChanged: (v) => setState(() => day = v),
                 ),
-                child: const Text('Lanjut'),
+                picker(
+                  items: months,
+                  value: month,
+                  onChanged: (v) => setState(() => month = v),
+                ),
+                picker(
+                  items: years,
+                  value: year,
+                  onChanged: (v) => setState(() => year = v),
+                ),
+              ],
+            ),
+          ),
+
+          /// 🔥 AREA BAWAH → TAP UNTUK NEXT
+          GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: _saveAndNext,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Text(
+                'Tap di mana saja untuk lanjut',
+                style: TextStyle(color: Colors.white38),
               ),
-            )
-          ],
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }

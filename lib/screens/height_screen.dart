@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'weight_screen.dart';
 
 class HeightScreen extends StatefulWidget {
@@ -9,76 +10,126 @@ class HeightScreen extends StatefulWidget {
 }
 
 class _HeightScreenState extends State<HeightScreen> {
-  double height = 165;
+  int height = 165;
+  bool _isNavigating = false;
 
+  final List<int> heights = List.generate(250 - 150 + 1, (i) => 150 + i);
+
+  /// ================= SAVE & NEXT =================
+  Future<void> _saveAndNext() async {
+    if (_isNavigating) return;
+    _isNavigating = true;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('height', height.toDouble());
+
+    if (!mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const WeightScreen()),
+    );
+  }
+
+  /// ================= PICKER =================
+  Widget heightPicker() {
+    return SizedBox(
+      height: 180,
+      child: ListWheelScrollView.useDelegate(
+        itemExtent: 45,
+        physics: const FixedExtentScrollPhysics(),
+        onSelectedItemChanged: (index) {
+          setState(() {
+            height = heights[index];
+          });
+        },
+        childDelegate: ListWheelChildBuilderDelegate(
+          childCount: heights.length,
+          builder: (context, index) {
+            final value = heights[index];
+            final isSelected = value == height;
+            return Center(
+              child: Text(
+                '$value cm',
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.white54,
+                  fontSize: isSelected ? 24 : 16,
+                  fontWeight:
+                  isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  /// ================= UI =================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF1C1F3B),
-      body: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 100),
-            const Text(
-              'Selanjutnya,',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Berapa tinggi badan mu?',
-              style: TextStyle(color: Colors.white70),
-            ),
-            const SizedBox(height: 30),
 
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2A2D4E),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${height.toInt()} Cm',
-                  style: const TextStyle(color: Colors.white, fontSize: 20),
+      body: Column(
+        children: [
+          /// 🔥 AREA ATAS → TAP UNTUK NEXT
+          Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: _saveAndNext,
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    SizedBox(height: 100),
+                    Text(
+                      'Selanjutnya,',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 6),
+                    Text(
+                      'Scroll untuk memilih tinggi badan',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ],
                 ),
               ),
             ),
+          ),
 
-            Slider(
-              activeColor: const Color(0xFF009688),
-              inactiveColor: Colors.white24,
-              min: 100,
-              max: 220,
-              value: height,
-              onChanged: (value) {
-                setState(() {
-                  height = value;
-                });
-              },
+          /// 🚫 PICKER AREA → TIDAK MEMICU NAVIGASI
+          Container(
+            padding: const EdgeInsets.symmetric(
+              vertical: 24,
+              horizontal: 20,
             ),
+            margin: const EdgeInsets.symmetric(horizontal: 32),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2A2D4E),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: heightPicker(),
+          ),
 
-            const Spacer(),
-
-            Align(
-              alignment: Alignment.bottomRight,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const WeightScreen()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF009688),
-                  minimumSize: const Size(120, 45),
-                ),
-                child: const Text('Lanjut'),
+          /// 🔥 AREA BAWAH → TAP UNTUK NEXT
+          GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: _saveAndNext,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Text(
+                'Tap di mana saja untuk lanjut',
+                style: TextStyle(color: Colors.white38),
               ),
-            )
-          ],
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }

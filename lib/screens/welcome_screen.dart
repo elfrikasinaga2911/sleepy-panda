@@ -10,52 +10,94 @@ class WelcomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFF1C1F3B),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 80),
+        padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Column(
-              children: [
-                Image.asset('assets/images/panda.png', width: 120),
-                const SizedBox(height: 10),
-                const Text(
-                  'Sleepy Panda',
-                  style: TextStyle(
-                      fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-                const SizedBox(height: 40),
-                const Text(
-                  'Mulai dengan masuk atau mendaftar untuk melihat analisa tidur mu.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white70),
-                ),
-              ],
+            const Spacer(),
+
+            // ===== LOGO =====
+            Image.asset(
+              'assets/images/panda.png',
+              width: 120,
             ),
-            Column(
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                        context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-                  },
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF009688),
-                      minimumSize: const Size(double.infinity, 50)),
-                  child: const Text('Masuk'),
+            const SizedBox(height: 20),
+
+            // ===== TITLE =====
+            const Text(
+              'Sleepy Panda',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // ===== SUBTITLE =====
+            const Text(
+              'Pantau dan analisa kualitas tidurmu\nuntuk hidup yang lebih sehat',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+
+            const Spacer(),
+
+            // ===== BUTTON MASUK =====
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF009688),
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
-                const SizedBox(height: 12),
-                OutlinedButton(
-                  onPressed: () {
-                    Navigator.push(
-                        context, MaterialPageRoute(builder: (_) => const RegisterScreen()));
-                  },
-                  style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.white),
-                      minimumSize: const Size(double.infinity, 50)),
-                  child: const Text('Daftar', style: TextStyle(color: Colors.white)),
+                child: const Text(
+                  'Masuk',
+                  style: TextStyle(fontSize: 16),
                 ),
-              ],
-            )
+              ),
+            ),
+
+            const SizedBox(height: 14),
+
+            // ===== BUTTON DAFTAR =====
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                  );
+                },
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.white70),
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: const Text(
+                  'Daftar',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 40),
           ],
         ),
       ),
